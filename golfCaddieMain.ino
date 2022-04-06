@@ -23,32 +23,42 @@ int joystickXValue = 0;
 int xValue = 0;
 int yValue = 0;
 
-// RC = 0, Auto = 1
+// joystick = 0, RC = 1, auto = 2
 int mode = 0;
 
 void setup() {
   // initialize serial communications at 9600 bps:
   myservoL.attach(motorPinL);  // attaches the servo on pin 9 to the servo object
   myservoR.attach(motorPinR);
-  Serial.begin(9600);
 }
 
 void loop() {
   
    // Parse input string from the jetson nano
 
-   //RC mode
+   //Joystick mode
   if (mode == 0) {
     joystickYValue = analogRead(joystickY);
     joystickXValue = analogRead(joystickX);
     
     //remap values for the motor
-    yValue = map(joystickYValue, 0, 1023, 0, 180);
-    xValue = map(joystickXValue, 0, 1023, 0, 180);
+    yValue = map(joystickYValue, 0, 1023, motorMin, motorMax);
+    xValue = map(joystickXValue, 0, 1023, motorMin, motorMax);
   }
-    myservoL.write(yValue);
-    myservoR.write(xValue);  
+
+  //RC Mode
+  if(mode == 1) {
+
+  }
+  //Autonomous mode
+  if(mode == 2) {
+    
+  }
+  
+  myservoL.write(yValue);
+  myservoR.write(xValue);  
 
   //always take tachometer reading regardless of mode
+  
   delay(10);
 }

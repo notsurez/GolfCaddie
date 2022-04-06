@@ -1,7 +1,18 @@
-#include <Servo.h>
+#if defined(ARDUINO) && ARDUINO >= 100
+  #include "Arduino.h"
+#else
+  #include <WProgram.h>
+#endif
+ 
+#include <Servo.h> 
+#include <ros.h>
+#include <std_msgs/UInt16.h>
 
-Servo myservoL;  // create servo object to control a servo
-Servo myservoR;  // create servo object to control a servo
+ros::NodeHandle  nh; //intitialize ros node handle
+
+//Left and right servos currently sit ins for the motors
+Servo myservoL;
+Servo myservoR; 
 
 // Analog pin numbers for the X and Y
 const int joystickY = A0; 
@@ -26,10 +37,23 @@ int yValue = 0;
 // joystick = 0, RC = 1, auto = 2
 int mode = 0;
 
+void servo_cb( const std_msgs::UInt16& cmd_msg){
+  30   servo.write(cmd_msg.data); //set servo angle, should be from 0-180  
+  31   digitalWrite(13, HIGH-digitalRead(13));  //toggle led  
+  32 }
+
+//ROS subscribers for right and left servo control
+ros::Subscriber<std_msgs::UInt16> subLeftServo("leftServo", servo_cb);
+ros::Subscriber<std_msgs::UInt16> subRightServo("rightServo", servo_cb);
+
 void setup() {
   // initialize serial communications at 9600 bps:
   myservoL.attach(motorPinL);  // attaches the servo on pin 9 to the servo object
   myservoR.attach(motorPinR);
+
+  nh.initNode();
+  nh.subscribe(subLeftServo);
+  nh.subscribe(subRightServo);
 }
 
 void loop() {
@@ -59,6 +83,6 @@ void loop() {
   myservoR.write(xValue);  
 
   //always take tachometer reading regardless of mode
-  
+  nh.spinOnce();
   delay(10);
 }

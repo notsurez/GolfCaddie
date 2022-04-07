@@ -35,16 +35,24 @@ int xValue = 0;
 int yValue = 0;
 
 // joystick = 0, RC = 1, auto = 2
-int mode = 0;
+int mode = 1;
 
-void servo_cb( const std_msgs::UInt16& cmd_msg){
-  30   servo.write(cmd_msg.data); //set servo angle, should be from 0-180  
-  31   digitalWrite(13, HIGH-digitalRead(13));  //toggle led  
-  32 }
+void Lservo_cb( const std_msgs::UInt16& cmd_msg){
+  yValue = cmd_msg.data;
+}
+
+void Rservo_cb( const std_msgs::UInt16& cmd_msg){
+  xValue = cmd_msg.data;
+}
+
+void mode_cb( const std_msgs::UInt16& cmd_msg){
+  mode = cmd_msg.data;
+}
 
 //ROS subscribers for right and left servo control
-ros::Subscriber<std_msgs::UInt16> subLeftServo("leftServo", servo_cb);
-ros::Subscriber<std_msgs::UInt16> subRightServo("rightServo", servo_cb);
+ros::Subscriber<std_msgs::UInt16> subLeftServo("leftServo", Lservo_cb);
+ros::Subscriber<std_msgs::UInt16> subRightServo("rightServo", Rservo_cb);
+ros::Subscriber<std_msgs::UInt16> driveMode("driveMode", mode_cb);
 
 void setup() {
   // initialize serial communications at 9600 bps:
@@ -54,6 +62,7 @@ void setup() {
   nh.initNode();
   nh.subscribe(subLeftServo);
   nh.subscribe(subRightServo);
+  nh.subscribe(driveMode);
 }
 
 void loop() {

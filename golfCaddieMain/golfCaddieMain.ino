@@ -1,3 +1,30 @@
+/*  
+ *  Circuit
+ *  --------------------------
+ *  Motor Controller:
+ *   GND ---------- GND
+ *   4 ------------ IN1
+ *   5 ------------ AN1
+ *   6 ------------ AN2
+ *   7 ------------ IN2
+ *   
+ *   Joystick
+ *   GND ---------- GND
+ *   5V ----------- 5V
+ *   AO ----------- WRx
+ *   A1 ----------- WRy
+ *   
+ *   Left Tachometer
+ *   GND ---------- GND
+ *   5V ----------- 5V
+ *   2 ------------ Out
+ *   
+ *   Right Tachometer
+ *   GND ---------- GND
+ *   5V ----------- 5V
+ *   3------------ Out
+ */
+
 #if defined(ARDUINO) && ARDUINO >= 100
   #include "Arduino.h"
 #else
@@ -7,8 +34,19 @@
 #include <Servo.h> 
 #include <ros.h>
 #include <std_msgs/UInt16.h>
+#include <std_msgs/Float32.h>
 
 ros::NodeHandle  nh; //intitialize ros node handle
+
+//Initialize message and publisher for left tachometer
+std_msgs::Float32 LMotorSpeed;
+ros::Publisher leftTachPub("leftTachPub", &LMotorSpeed);
+
+int leftTachPin = 2; 
+unsigned long leftTachCounter = 0;
+int time_thresh = 1;    //Set number of hall trips for RPM reading
+float rpm_val = 0;
+unsigned long startTime = 0;
 
 //Left and right servos currently sit ins for the motors
 Servo myservoL;
@@ -59,7 +97,16 @@ void setup() {
   myservoL.attach(motorPinL);  // attaches the servo on pin 9 to the servo object
   myservoR.attach(motorPinR);
 
+  //Set hallEffect pins as input
+  pinMode(leftTachPin, INPUT);
+
+  //Attach interrupts to hall effect pins
+  attachInterrupt(digitalPinToInterrupt(leftTachPin), isrLeft, RISING);
+  
   nh.initNode();
+  //Publishers
+  nh.advertise(leftTachPub);
+  //Subscribers
   nh.subscribe(subLeftServo);
   nh.subscribe(subRightServo);
   nh.subscribe(driveMode);
@@ -92,6 +139,25 @@ void loop() {
   myservoR.write(xValue);  
 
   //always take tachometer reading regardless of mode
+  LMotorSpeed.data = hallPinTach(leftTachCounter);
+  leftTachPub.publish( &LMotorSpeed );
+  
   nh.spinOnce();
   delay(10);
+}
+
+//Interrupt service routine
+void isrLeft() {
+  leftTachCounter++;
+}
+
+float hallPinTach(unsigned long tachCounter) {
+  unsigned long endTime = micros();
+  unsigned long time_passed = ((endTime - startTime) / 1000000.0);
+  if (time_passed >= time_thresh) {
+      rpm_val = (leftTachCounter / time_passed) * 60.0;
+      leftTachCounter = 0;
+      startTime = micros();
+    }
+    return rpm_val;
 }

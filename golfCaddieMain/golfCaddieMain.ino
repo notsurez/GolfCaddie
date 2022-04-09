@@ -30,11 +30,13 @@
 #else
   #include <WProgram.h>
 #endif
- 
-#include <Servo.h> 
+
 #include <ros.h>
-#include <std_msgs/UInt16.h>
+#include <std_msgs/Int16.h>
 #include <std_msgs/Float32.h>
+#include <Cytron_SmartDriveDuo.h>
+
+Cytron_SmartDriveDuo smartDriveDuo30(PWM_INDEPENDENT, 4, 7, 5, 6);
 
 ros::NodeHandle  nh; //intitialize ros node handle
 
@@ -48,17 +50,14 @@ int time_thresh = 1;    //Set number of hall trips for RPM reading
 float rpm_val = 0;
 unsigned long startTime = 0;
 
-//Left and right servos currently sit ins for the motors
-Servo myservoL;
-Servo myservoR; 
 
 // Analog pin numbers for the X and Y
 const int joystickY = A0; 
 const int joystickX = A1;
 
 //Values for the min and max of the motors
-const int motorMin = 0;
-const int motorMax = 180;
+const int motorMin = -100;
+const int motorMax = 100;
 
 //Servo pin for testing purposes
 const int motorPinL = 9; 
@@ -69,33 +68,30 @@ int joystickYValue = 0;
 int joystickXValue = 0;
 
 //remapped values for to assign to the motors
-int xValue = 0;
-int yValue = 0;
+int leftMotorSpeed = 0;
+int rightMotorSpeed = 0;
 
 // joystick = 0, RC = 1, auto = 2
-int mode = 1;
+int mode = 0;
 
-void Lservo_cb( const std_msgs::UInt16& cmd_msg){
-  yValue = cmd_msg.data;
+void lMotor_cb( const std_msgs::Int16& cmd_msg){
+  leftMotorSpeed = cmd_msg.data;
 }
 
-void Rservo_cb( const std_msgs::UInt16& cmd_msg){
-  xValue = cmd_msg.data;
+void rMotor_cb( const std_msgs::Int16& cmd_msg){
+  rightMotorSpeed = cmd_msg.data;
 }
 
-void mode_cb( const std_msgs::UInt16& cmd_msg){
+void mode_cb( const std_msgs::Int16& cmd_msg){
   mode = cmd_msg.data;
 }
 
 //ROS subscribers for right and left servo control
-ros::Subscriber<std_msgs::UInt16> subLeftServo("leftServo", Lservo_cb);
-ros::Subscriber<std_msgs::UInt16> subRightServo("rightServo", Rservo_cb);
-ros::Subscriber<std_msgs::UInt16> driveMode("driveMode", mode_cb);
+ros::Subscriber<std_msgs::Int16> subLeftMotor("leftMotor", lMotor_cb);
+ros::Subscriber<std_msgs::Int16> subRightMotor("rightMotor", rMotor_cb);
+ros::Subscriber<std_msgs::Int16> driveMode("driveMode", mode_cb);
 
 void setup() {
-  // initialize serial communications at 9600 bps:
-  myservoL.attach(motorPinL);  // attaches the servo on pin 9 to the servo object
-  myservoR.attach(motorPinR);
 
   //Set hallEffect pins as input
   pinMode(leftTachPin, INPUT);
@@ -107,8 +103,8 @@ void setup() {
   //Publishers
   nh.advertise(leftTachPub);
   //Subscribers
-  nh.subscribe(subLeftServo);
-  nh.subscribe(subRightServo);
+  nh.subscribe(subLeftMotor);
+  nh.subscribe(subRightMotor);
   nh.subscribe(driveMode);
 }
 
@@ -122,8 +118,8 @@ void loop() {
     joystickXValue = analogRead(joystickX);
     
     //remap values for the motor
-    yValue = map(joystickYValue, 0, 1023, motorMin, motorMax);
-    xValue = map(joystickXValue, 0, 1023, motorMin, motorMax);
+    leftMotorSpeed = map(joystickYValue, 0, 1023, motorMin, motorMax);
+    rightMotorSpeed = map(joystickXValue, 0, 1023, motorMin, motorMax);
   }
 
   //RC Mode
@@ -135,9 +131,8 @@ void loop() {
     
   }
   
-  myservoL.write(yValue);
-  myservoR.write(xValue);  
-
+  smartDriveDuo30.control(leftMotorSpeed, rightMotorSpeed);
+  
   //always take tachometer reading regardless of mode
   LMotorSpeed.data = hallPinTach(leftTachCounter);
   leftTachPub.publish( &LMotorSpeed );

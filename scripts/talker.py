@@ -11,14 +11,7 @@ def talker():
     leftMotorValue = 0
 
     while not rospy.is_shutdown():
-        rospy.loginfo(leftMotorValue)
         pub.publish(leftMotorValue)
-        leftMotorValue = 180
-        time.sleep(1)
-        rospy.loginfo(leftMotorValue)
-        pub.publish(leftMotorValue)
-        leftMotorValue = 0
-        time.sleep(1)
         rate.sleep()
 
 if __name__ == '__main__':

@@ -1,13 +1,4 @@
-<include file="$(find imu_ros_bno055)/launch/imu.launch">
 
-	<arg name = "serial_port" value="/dev/ttyUSB0" />
-	<arg name = "frame_id" value="imu_link" />
-	<arg name = "operation_mode" value="IMU"/>
-	<arg name = "oscillator" value="INTERNAL" />
-	<arg name = "reset_orientation" value="true" />
-	<arg name = "frequency" value="50" /> 
-	<arg name = "use_magnetometer" value="false" />
-	<arg name = "use_temperature" value="false" />
 
 <launch>
 	
@@ -85,6 +76,7 @@
 	</node>
 	
 	<!-- Depth Image to Laser Scan Node -->
+	
 	<node name="depthimage_to_laserscan" pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" args="">
 		<remap from="image"       to="/camera/aligned_depth_to_color/image_raw"/> <!-- change here for your camera depth topic name. Default: "/camera/depth/image_raw" -->
 
@@ -99,4 +91,17 @@
 		<param name="range_max"       type="double" value="10.0"/> <!--default: 10m. Ranges less than this are considered +Inf. -->
 		<param name="output_frame_id" type="str"    value="camera_depth_frame"/> <!--default: camera_depth_frame. Frame id of the laser scan. -->
 	</node>
+	
+	<!-- Inertial Measurement Unit (IMU) -->
+	<include file="$(find imu_ros_bno055)/launch/imu.launch">
+
+	<arg name = "serial_port" value="/dev/ttyUSB0" />
+	<arg name = "frame_id" value="imu_link" />
+	<arg name = "operation_mode" value="IMU"/>
+	<arg name = "oscillator" value="INTERNAL" />
+	<arg name = "reset_orientation" value="true" />
+	<arg name = "frequency" value="50" /> 
+	<arg name = "use_magnetometer" value="false" />
+	<arg name = "use_temperature" value="false" />
+	
 </launch>

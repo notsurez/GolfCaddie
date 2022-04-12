@@ -22,7 +22,13 @@
  *   Right Tachometer
  *   GND ---------- GND
  *   5V ----------- 5V
- *   3------------ Out
+ *   3 ------------ Out
+ *   
+ *   BT Module
+ *   GND ---------- GND
+ *   3V ----------- 3V
+ *   19 ----------- TX (receive from phone)
+ *   18 ----------- RX (transmit to phone)
  */
 
 #if defined(ARDUINO) && ARDUINO >= 100
@@ -91,6 +97,11 @@ ros::Subscriber<std_msgs::Int16> subLeftMotor("leftMotor", lMotor_cb);
 ros::Subscriber<std_msgs::Int16> subRightMotor("rightMotor", rMotor_cb);
 ros::Subscriber<std_msgs::Int16> driveMode("driveMode", mode_cb);
 
+//BT parameters
+char rxBuffer[500];
+byte j = 0;
+byte k = 0;
+
 void setup() {
 
   //Set hallEffect pins as input
@@ -106,6 +117,9 @@ void setup() {
   nh.subscribe(subLeftMotor);
   nh.subscribe(subRightMotor);
   nh.subscribe(driveMode);
+
+  Serial.begin(115200); //usb debugging
+  Serial1.begin(9600); //the bt module
 }
 
 void loop() {
@@ -139,6 +153,8 @@ void loop() {
   
   nh.spinOnce();
   delay(10);
+  
+  btLoop();
 }
 
 //Interrupt service routine
@@ -155,4 +171,30 @@ float hallPinTach(unsigned long tachCounter) {
       startTime = micros();
     }
     return rpm_val;
+}
+
+void btLoop() { // run over and over
+  while (Serial1.available()) {
+    //Serial.write(mySerial.read());
+    rxBuffer[j] = Serial1.read();
+    j++;
+    digitalWrite(13, j%3);
+    //Serial.write(rxBuffer[j]);
+    //Serial.print(j);
+    if (rxBuffer[j-1] == ';' || j > 100) {
+      k = j - 1;
+      j = 0;
+      
+      Serial.write(rxBuffer);
+      for (byte m = 0; m < 100; m++) {
+      rxBuffer[m] = ' ';
+    }
+    
+    if (k > 0) Serial.println(F(" "));
+    
+   }  
+  }
+  
+  while (Serial.available()) Serial1.write(Serial.read());
+  
 }

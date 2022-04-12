@@ -40,6 +40,7 @@
 #include <ros.h>
 #include <std_msgs/Int16.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/String.h>
 #include <Cytron_SmartDriveDuo.h>
 
 Cytron_SmartDriveDuo smartDriveDuo30(PWM_INDEPENDENT, 4, 7, 5, 6);
@@ -49,6 +50,9 @@ ros::NodeHandle  nh; //intitialize ros node handle
 //Initialize message and publisher for left tachometer
 std_msgs::Float32 LMotorSpeed;
 ros::Publisher leftTachPub("leftTachPub", &LMotorSpeed);
+
+std_msgs::String str_msg;
+ros::Publisher chatter("chatter", &str_msg);
 
 int leftTachPin = 2; 
 unsigned long leftTachCounter = 0;
@@ -113,12 +117,13 @@ void setup() {
   nh.initNode();
   //Publishers
   nh.advertise(leftTachPub);
+  nh.advertise(chatter);
   //Subscribers
   nh.subscribe(subLeftMotor);
   nh.subscribe(subRightMotor);
   nh.subscribe(driveMode);
 
-  Serial.begin(115200); //usb debugging
+  Serial.begin(57600); //usb debugging
   Serial1.begin(9600); //the bt module
 }
 
@@ -174,7 +179,7 @@ float hallPinTach(unsigned long tachCounter) {
 }
 
 void btLoop() { // run over and over
-  while (Serial1.available()) {
+  if (Serial1.available()) {
     //Serial.write(mySerial.read());
     rxBuffer[j] = Serial1.read();
     j++;
@@ -186,6 +191,8 @@ void btLoop() { // run over and over
       j = 0;
       
       Serial.write(rxBuffer);
+      str_msg.data = rxBuffer;
+  chatter.publish( &str_msg );
       for (byte m = 0; m < 100; m++) {
       rxBuffer[m] = ' ';
     }
@@ -195,6 +202,6 @@ void btLoop() { // run over and over
    }  
   }
   
-  while (Serial.available()) Serial1.write(Serial.read());
+  //while (Serial.available()) Serial1.write(Serial.read());
   
 }

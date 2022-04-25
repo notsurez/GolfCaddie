@@ -1,0 +1,24 @@
+<launch>
+
+    <arg name="model" default="$(find golf_caddie)/urdf/robot_core.urdf" />
+    <arg name="gui" default="true" />
+    <!--<arg name="rvizconfig" default="$(find golf_caddie)/rviz/urdf.rviz" />-->
+
+   	<param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
+	
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+	
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+	
+	<!--<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />-->
+	
+	<!--<node name="caddie_controller" pkg="caddie" type="caddie_controller">
+		<param name="publish_tf" value="true" />
+    		<param name="publish_rate" value="10.0" />
+    		<param name="linear_scale_positive" value="1.025" />
+    		<param name="linear_scale_negative" value="1.025" />
+    		<param name="angular_scale_positive" value="1.078" />
+    		<param name="angular_scale_negative" value="1.078" />
+		<param name="angular_scale_accel" value="0.0" />
+	</node>-->	
+</launch>

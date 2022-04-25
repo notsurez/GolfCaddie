@@ -19,8 +19,8 @@ caddie_lat = 0.0
 caddie_lon = 0.0 
 phone_lat = 0.0
 phone_lon = 0.0
-phone_lat1 = 43.133847
-phone_lon1 = -75.249357
+phone_lat1 = 43.141731
+phone_lon1 = -75.226937
 gps_distance = 0
 gps_heading = 0
 phone_joystick_angle = 0
@@ -247,6 +247,82 @@ def avoid_obstacles():
 		angularz = 1.5
 	auto_move_cmd.linear.x = linearx
 	auto_move_cmd.angular.z = angularz
+    
+def auto_mode():
+    global heading	
+	global distance
+	global gps_msg_heading
+    global dists
+	linearx = 0
+	angularz = 0
+	objInPath = False
+    heading, roll, pitch = bno.read_euler()
+
+	#Correct for magnetic north
+	heading = heading + 80
+	'''
+	#resolve quadrent issues
+	if (heading >= 0 and heading <=90):
+		heading += 180
+	elif (heading > 90 and heading <= 180):
+		heading += 180
+	'''
+	if (heading > 360):
+		heading = heading - 360	
+
+	facing_goal = False
+	head_diff = heading - fwd_azimuth
+
+	#print("Heading: " + str(heading))
+	#print("fwd_azimuth: " + str(fwd_azimuth))
+	#print("distance: " + str(distance))
+	#print("heading difference: " + str(head_diff))
+	_range = 25
+	#sys, gyro, accel, mag = bno.get_calibration_status()
+	if((heading > fwd_azimuth-_range) and (heading < fwd_azimuth+_range)):
+		facing_goal = True
+	else:
+		facing_goal = False
+
+
+	if(facing_goal):
+		if(distance < 18):
+			linearx = 0
+			angular = 0
+		else:
+			linearx = 1.5
+			angularz = 0
+	#Negative, turn right
+	elif(head_diff < 180):
+		linearx = 0
+		angularz = 1.5
+	#positive, turn left
+	elif(head_diff >= 180):
+		linearx = 0
+		angularz = -1.5
+        
+    #obstacle avoidance
+    _range = 20
+	if(dists):
+		for i in range(256-70, 256+70):
+			if(dists[i] < 2.5):
+				objInPath = True
+
+    while(objInPath):
+        if(not objInPath):
+            linearx = 1.5
+            angularz = 0
+        else:
+            #Change this to turn towards goal if possible
+            linearx = 0
+            angularz = 1.5
+    
+
+	auto_move_cmd.linear.x = linearx
+	auto_move_cmd.angular.z = angularz
+    
+    
+    
 
 def controller():
 	#initialize IMU

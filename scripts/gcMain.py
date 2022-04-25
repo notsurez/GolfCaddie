@@ -165,7 +165,7 @@ def joystick_convert():
 	global phone_joystick_angle
 	y = float(phone_joystick_mag)*math.sin(math.radians(float(phone_joystick_angle)) + math.pi/2)
 	x = float(phone_joystick_mag)*math.cos(math.radians(float(phone_joystick_angle)) + math.pi/2)
-	phone_joystick_mag1 = -map_vals(float(x), -100.0, 100.0, -2.0, 2.0)
+	phone_joystick_mag1 = -map_vals(float(x), -100.0, 100.0, -2.5, 2.5)
 	phone_joystick_angle1 = map_vals(float(y), -100.0, 100.0, -2.0, 2.0)
 	#phone_joystick_mag1 = ((float(phone_joystick_mag) / 1.0) * 4.0) - 2.0
 	#phone_joystick_angle1 = ((float(phone_joystick_angle) / 359.0) * 4.0 ) - 2.0
@@ -209,7 +209,7 @@ def goal_to_goal():
 
 
 	if(facing_goal):
-		if(distance < 2):
+		if(distance < 18):
 			linearx = 0
 			angular = 0
 		else:

@@ -1,0 +1,5 @@
+<launch>
+	<include file="$(find golf_caddie)/launch/gcSensors.launch" />
+
+	<include file="$(find golf_caddie)/launch/gcSerial.launch" />
+</launch>
